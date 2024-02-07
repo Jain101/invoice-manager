@@ -9,8 +9,12 @@ import {
   Revenue,
 } from './definitions';
 import { formatCurrency } from './utils';
+import { unstable_noStore as noCache } from 'next/cache';
 
+// export const dynamic = "force-dynamic" 
+// how to use this in the next.js page
 export async function fetchRevenue() {
+  noCache();
   // Add noStore() here to prevent the response from being cached.
   // This is equivalent to in fetch(..., {cache: 'no-store'}).
 
@@ -33,6 +37,7 @@ export async function fetchRevenue() {
 }
 
 export async function fetchLatestInvoices() {
+  noCache();
   try {
     const data = await sql<LatestInvoiceRaw>`
       SELECT invoices.amount, customers.name, customers.image_url, customers.email, invoices.id
@@ -53,6 +58,7 @@ export async function fetchLatestInvoices() {
 }
 
 export async function fetchCardData() {
+  noCache();
   try {
     // You can probably combine these into a single SQL query
     // However, we are intentionally splitting them to demonstrate
@@ -63,7 +69,7 @@ export async function fetchCardData() {
          SUM(CASE WHEN status = 'paid' THEN amount ELSE 0 END) AS "paid",
          SUM(CASE WHEN status = 'pending' THEN amount ELSE 0 END) AS "pending"
          FROM invoices`;
-
+    // to avoid waterfall effect, we can use Promise.all to run all the promises at the same time
     const data = await Promise.all([
       invoiceCountPromise,
       customerCountPromise,
@@ -92,6 +98,7 @@ export async function fetchFilteredInvoices(
   query: string,
   currentPage: number,
 ) {
+  noCache();
   const offset = (currentPage - 1) * ITEMS_PER_PAGE;
 
   try {
@@ -124,6 +131,7 @@ export async function fetchFilteredInvoices(
 }
 
 export async function fetchInvoicesPages(query: string) {
+  noCache();
   try {
     const count = await sql`SELECT COUNT(*)
     FROM invoices
@@ -145,6 +153,7 @@ export async function fetchInvoicesPages(query: string) {
 }
 
 export async function fetchInvoiceById(id: string) {
+  noCache();
   try {
     const data = await sql<InvoiceForm>`
       SELECT
@@ -170,6 +179,7 @@ export async function fetchInvoiceById(id: string) {
 }
 
 export async function fetchCustomers() {
+  noCache();
   try {
     const data = await sql<CustomerField>`
       SELECT
@@ -188,6 +198,7 @@ export async function fetchCustomers() {
 }
 
 export async function fetchFilteredCustomers(query: string) {
+  noCache();
   try {
     const data = await sql<CustomersTableType>`
 		SELECT
@@ -221,6 +232,7 @@ export async function fetchFilteredCustomers(query: string) {
 }
 
 export async function getUser(email: string) {
+  noCache();
   try {
     const user = await sql`SELECT * FROM users WHERE email=${email}`;
     return user.rows[0] as User;
